@@ -43,7 +43,7 @@ public class ShellTemplateMappingProvider(ILogger<ShellTemplateMappingProvider> 
             })
             .Where(x => x.Parts is { Length: >= 1 } && x.Rule.Index > 0 && x.Parts.Length >= x.Rule.Index)
             .Select(x => x.Parts![x.Rule.Index - 1])
-            .FirstOrDefault();
+            .FirstOrDefault(extractedId => !string.Equals(extractedId, aasIdentifier, StringComparison.Ordinal));
 
         if (!string.IsNullOrEmpty(productId))
         {

@@ -25,4 +25,9 @@ public static class JsonSerializationOptions
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
+
+    public static readonly JsonSerializerOptions DeserializationOption = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 }

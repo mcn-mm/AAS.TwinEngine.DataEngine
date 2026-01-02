@@ -11,6 +11,7 @@ using AAS.TwinEngine.DataEngine.DomainModel.AasRepository;
 using AAS.TwinEngine.DataEngine.DomainModel.Plugin;
 using AAS.TwinEngine.DataEngine.DomainModel.SubmodelRepository;
 using AAS.TwinEngine.DataEngine.Infrastructure.Providers.PluginDataProvider.Helper;
+using AAS.TwinEngine.DataEngine.Infrastructure.Shared;
 
 using Json.Schema;
 
@@ -82,7 +83,7 @@ public class PluginDataHandler(
 
             try
             {
-                var shellDescriptorData = JsonSerializer.Deserialize<ShellDescriptorsMetaData>(responseContent);
+                var shellDescriptorData = JsonSerializer.Deserialize<ShellDescriptorsMetaData>(responseContent, JsonSerializationOptions.DeserializationOption);
                 if (shellDescriptorData == null)
                 {
                     logger.LogError("Failed to deserialize All ShellDescriptorData. Response content: {Content}", responseContent);

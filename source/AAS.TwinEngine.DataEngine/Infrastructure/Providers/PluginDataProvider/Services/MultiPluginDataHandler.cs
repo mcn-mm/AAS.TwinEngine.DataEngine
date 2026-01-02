@@ -131,7 +131,7 @@ public class MultiPluginDataHandler(IOptions<Semantics> semantics, ILogger<Multi
         };
     }
 
-    private static SemanticTreeNode MergeBranch(SemanticBranchNode branch, IList<SemanticTreeNode> valueTrees)
+    private SemanticTreeNode MergeBranch(SemanticBranchNode branch, IList<SemanticTreeNode> valueTrees)
     {
         var mergedBranch = new SemanticBranchNode(branch.SemanticId, branch.Cardinality);
 
@@ -241,8 +241,14 @@ public class MultiPluginDataHandler(IOptions<Semantics> semantics, ILogger<Multi
         }
     }
 
-    private static List<SemanticTreeNode> FindMatchingNodes(IEnumerable<SemanticTreeNode> valueTrees, string semanticId)
+    private List<SemanticTreeNode> FindMatchingNodes(IEnumerable<SemanticTreeNode> valueTrees, string semanticId)
     {
+        if (semanticId.Contains(_submodelElementIndexContextPrefix, StringComparison.Ordinal))
+        {
+            var indexPrefixIndex = semanticId.IndexOf(_submodelElementIndexContextPrefix, StringComparison.OrdinalIgnoreCase);
+            semanticId = semanticId[..indexPrefixIndex];
+        }
+
         var matches = new List<SemanticTreeNode>();
 
         foreach (var vt in valueTrees.OfType<SemanticBranchNode>())

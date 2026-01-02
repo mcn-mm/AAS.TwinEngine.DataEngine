@@ -131,16 +131,24 @@ public partial class SubmodelTemplateService(
     private static bool TryParseIdShortWithBracketIndex(string idShort, out string idShortWithoutIndex, out int index)
     {
         var match = SubmodelElementListIndex().Match(idShort);
-        if (match.Success)
+        if (!match.Success)
         {
-            idShortWithoutIndex = match.Groups[1].Value;
-            index = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
-            return true;
+            idShortWithoutIndex = string.Empty;
+            index = -1;
+            return false;
         }
 
-        idShortWithoutIndex = string.Empty;
-        index = -1;
-        return false;
+        idShortWithoutIndex = match.Groups[1].Value;
+        var indexGroup = match.Groups[2].Success ? match.Groups[2] : match.Groups[3];
+        if (!indexGroup.Success)
+        {
+            idShortWithoutIndex = string.Empty;
+            index = -1;
+            return false;
+        }
+
+        index = int.Parse(indexGroup.Value, CultureInfo.InvariantCulture);
+        return true;
     }
 
     private static SubmodelElementList GetListElementByIdShort(List<ISubmodelElement> elements, string idShort)
@@ -157,6 +165,11 @@ public partial class SubmodelTemplateService(
 
     private static ISubmodelElement? GetElementAtIndex(SubmodelElementList list, int index)
     {
+        if (list.TypeValueListElement is AasSubmodelElements.SubmodelElementCollection or AasSubmodelElements.SubmodelElementList && list.Value?.Count > 0)
+        {
+            return list.Value.FirstOrDefault()!;
+        }
+
         if (index < 0 || index >= list.Value?.Count)
         {
             throw new InternalDataProcessingException();
@@ -183,7 +196,7 @@ public partial class SubmodelTemplateService(
     /// e.g. "element[3]" -> matches Group1= "element", Group2 = "3"
     /// Pattern: ^(.+?)\[(\d+)\]$
     /// </summary>
-    [GeneratedRegex(@"^(.+?)\[(\d+)\]$")]
+    [GeneratedRegex(@"^(.+?)(?:\[(\d+)\]|%5B(\d+)%5D)$")]
     private static partial Regex SubmodelElementListIndex();
 
     /// <summary>
