@@ -189,22 +189,64 @@ public class SubmodelTemplateServiceTests
     }
 
     [Fact]
-    public async Task GetSubmodelTemplateAsync_ThrowsNotFoundException_WhenListIndexIsOutOfRange()
+    public async Task GetSubmodelTemplateAsync_Supports_UrlEncoded_ListIndex()
     {
         var submodel = TestData.CreateSubmodelWithModel3DList();
-        const string Path = "Model3D[5].ModelFile1";
+        const string Path = "Model3D%5B0%5D.ModelDataFile";
+
         _mappingProvider.GetTemplateId(SubmodelId).Returns(TemplateId);
         _templateProvider.GetSubmodelTemplateAsync(TemplateId, Arg.Any<CancellationToken>())
                          .Returns(submodel);
 
-        await Assert.ThrowsAsync<InternalDataProcessingException>(() => _sut.GetSubmodelTemplateAsync(SubmodelId, Path, CancellationToken.None));
+        var result = await _sut.GetSubmodelTemplateAsync(SubmodelId, Path, CancellationToken.None);
+
+        Assert.NotNull(result);
     }
 
     [Fact]
-    public async Task GetSubmodelTemplateAsync_ThrowsNotFoundException_WhenListElementNotFound()
+    public async Task GetSubmodelTemplateAsync_Throws_When_ListIndex_IsNegative()
     {
         var submodel = TestData.CreateSubmodelWithModel3DList();
-        const string Path = "NonExistentList[0].ModelFile1";
+        const string Path = "Model3D[-1]";
+
+        _mappingProvider.GetTemplateId(SubmodelId).Returns(TemplateId);
+        _templateProvider.GetSubmodelTemplateAsync(TemplateId, Arg.Any<CancellationToken>())
+                         .Returns(submodel);
+
+        await Assert.ThrowsAsync<InternalDataProcessingException>(
+            () => _sut.GetSubmodelTemplateAsync(SubmodelId, Path, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task GetSubmodelTemplateAsync_ReturnsSubmodel_WhenTypeValueListElementIsSubmodelCollection_AndListIndexExceedsAvailableElements()
+    {
+        var expectedSubmodel = TestData.CreateSubmodelWithModel3DList();
+        var submodel = TestData.CreateSubmodelWithModel3DList();
+        const string Path = "Model3D[5].ModelDataFile";
+        _mappingProvider.GetTemplateId(SubmodelId).Returns(TemplateId);
+        _templateProvider.GetSubmodelTemplateAsync(TemplateId, Arg.Any<CancellationToken>())
+                         .Returns(submodel);
+
+        var result = await _sut.GetSubmodelTemplateAsync(SubmodelId, Path, CancellationToken.None);
+
+        Assert.Equal(GetSemanticId(expectedSubmodel), GetSemanticId(result));
+
+        var list = result.SubmodelElements?.FirstOrDefault() as SubmodelElementList;
+        Assert.NotNull(list);
+        Assert.Single(list.Value!);
+        var collection = list.Value![0] as SubmodelElementCollection;
+        Assert.Single(collection!.Value!);
+        var file = collection!.Value!.FirstOrDefault() as File;
+        Assert.NotNull(file);
+        Assert.Equal("ModelDataFile", file.IdShort);
+        Assert.Equal("https://localhost/ModelDataFile.glb", file.Value);
+    }
+
+    [Fact]
+    public async Task GetSubmodelTemplateAsync_ThrowsInternalDataProcessingException_WhenTypeValueListElementIsSubmodelProperty_AndListIndexExceedsAvailableElements()
+    {
+        var submodel = TestData.CreateSubmodelWithPropertyInsideList();
+        const string Path = "listProperty[2]";
         _mappingProvider.GetTemplateId(SubmodelId).Returns(TemplateId);
         _templateProvider.GetSubmodelTemplateAsync(TemplateId, Arg.Any<CancellationToken>())
                          .Returns(submodel);
@@ -280,5 +322,4 @@ public class SubmodelTemplateServiceTests
         await Assert.ThrowsAsync<SubmodelElementNotFoundException>(
             () => _sut.GetSubmodelTemplateAsync(SubmodelId, "SomePath", CancellationToken.None));
     }
-
 }

@@ -526,6 +526,15 @@ public partial class SemanticIdHandler(ILogger<SemanticIdHandler> logger, IOptio
                 continue;
             }
 
+            if (!AreAllNodesOfSameType(semanticTreeNodes, out _))
+            {
+                logger.LogWarning("Mixed node types found for element '{IdShort}' with SemanticId '{SemanticId}'. Expected all nodes to be either SemanticBranchNode or SemanticLeafNode. Removing element.",
+                                  element.IdShort,
+                                  ExtractSemanticId(element));
+                _ = elements.Remove(element);
+                continue;
+            }
+
             if (semanticTreeNodes.Count > 1 && element is not Property && element is not ReferenceElement)
             {
                 _ = elements.Remove(element);
@@ -546,6 +555,25 @@ public partial class SemanticIdHandler(ILogger<SemanticIdHandler> logger, IOptio
                 HandleSingleSemanticTreeNode(element, semanticTreeNodes[0]);
             }
         }
+    }
+
+    private static bool AreAllNodesOfSameType(List<SemanticTreeNode> nodes, out Type? nodeType)
+    {
+        if (nodes.Count == 0)
+        {
+            nodeType = null;
+            return true;
+        }
+
+        var firstNodeType = nodes[0].GetType();
+        nodeType = firstNodeType;
+
+        if (firstNodeType != typeof(SemanticBranchNode) && firstNodeType != typeof(SemanticLeafNode))
+        {
+            return false;
+        }
+
+        return nodes.All(node => node.GetType() == firstNodeType);
     }
 
     private void HandleSingleSemanticTreeNode(ISubmodelElement element, SemanticTreeNode node) => FillOutTemplate(element, node);
@@ -800,7 +828,7 @@ public partial class SemanticIdHandler(ILogger<SemanticIdHandler> logger, IOptio
     /// e.g. "element[3]" -> matches Group1= "element", Group2 = "3"
     /// Pattern: ^(.+?)\[(\d+)\]$
     /// </summary>
-    [GeneratedRegex(@"^(.+?)\[(\d+)\]$")]
+    [GeneratedRegex(@"^(.+?)(?:\[(\d+)\]|%5B(\d+)%5D)$")]
     private static partial Regex SubmodelElementListIndex();
 
     /// <summary>
@@ -821,19 +849,27 @@ public partial class SemanticIdHandler(ILogger<SemanticIdHandler> logger, IOptio
         return submodelElements?.FirstOrDefault(e => e.IdShort == idShort);
     }
 
-    private static bool TryParseIdShortWithBracketIndex(string segment, out string idShortWithoutIndex, out int index)
+    private static bool TryParseIdShortWithBracketIndex(string idShort, out string idShortWithoutIndex, out int index)
     {
-        var match = SubmodelElementListIndex().Match(segment);
-        if (match.Success)
+        var match = SubmodelElementListIndex().Match(idShort);
+        if (!match.Success)
         {
-            idShortWithoutIndex = match.Groups[1].Value;
-            index = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
-            return true;
+            idShortWithoutIndex = string.Empty;
+            index = -1;
+            return false;
         }
 
-        idShortWithoutIndex = string.Empty;
-        index = -1;
-        return false;
+        idShortWithoutIndex = match.Groups[1].Value;
+        var indexGroup = match.Groups[2].Success ? match.Groups[2] : match.Groups[3];
+        if (!indexGroup.Success)
+        {
+            idShortWithoutIndex = string.Empty;
+            index = -1;
+            return false;
+        }
+
+        index = int.Parse(indexGroup.Value, CultureInfo.InvariantCulture);
+        return true;
     }
 
     private ISubmodelElement GetElementFromListByIndex(IEnumerable<ISubmodelElement>? elements, string idShortWithoutIndex, int index)

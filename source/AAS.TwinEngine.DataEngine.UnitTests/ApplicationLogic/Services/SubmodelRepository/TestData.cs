@@ -2,6 +2,8 @@
 
 using AasCore.Aas3_0;
 
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+
 using File = AasCore.Aas3_0.File;
 using Key = AasCore.Aas3_0.Key;
 using Range = AasCore.Aas3_0.Range;
@@ -632,6 +634,41 @@ internal static class TestData
         );
     }
 
+    public static SubmodelElementList CreateElementListWithProperty()
+    {
+        return new SubmodelElementList(
+                                       idShort: "listProperty",
+                                       semanticId: new Reference(
+                                                                 ReferenceTypes.ExternalReference,
+                                                                 [
+                                                                     new Key(KeyTypes.SubmodelElementList,
+                                                                          "http://example.com/idta/digital-nameplate/list-property")
+                                                                 ]
+                                                                ),
+                                        typeValueListElement: AasSubmodelElements.Property,
+                                       value: [
+                                             CreateContactName()
+                                           ]
+                                      );
+    }
+
+    public static Submodel CreateSubmodelWithPropertyInsideList()
+    {
+        return new Submodel(
+                            id: "http://example.com/idta/digital-nameplate",
+                            idShort: "DigitalNameplate",
+                            semanticId: new Reference(
+                                                      ReferenceTypes.ExternalReference,
+                                                      [
+                                                          new Key(KeyTypes.Submodel, "http://example.com/idta/digital-nameplate/semantic-id")
+                                                      ]
+                                                     ),
+                            submodelElements: [
+                                CreateElementListWithProperty()
+                            ]
+                           );
+    }
+
     public static Submodel CreateSubmodelWithoutExtraElements()
     {
         return new Submodel(
@@ -720,6 +757,45 @@ internal static class TestData
       ]
     );
 
+    public static readonly SubmodelElementCollection InValidComplexData = new(
+  idShort: "ComplexData",
+  semanticId: new Reference(
+    ReferenceTypes.ExternalReference,
+    [
+      new Key(KeyTypes.SubmodelElementList, "http://example.com/idta/digital-nameplate/complex-data")
+    ]
+  ),
+  qualifiers:
+  [
+      new Qualifier(
+                        type: "ExternalReference",
+                        valueType: DataTypeDefXsd.String,
+                        value: "OneToMany")
+  ],
+  value: [
+    CreateManufacturerName(),
+      new Property(
+        idShort: "ModelType",
+        valueType: DataTypeDefXsd.String,
+        value: "", // left intentionally empty for FillOut tests
+        semanticId: new Reference(
+          ReferenceTypes.ExternalReference,
+          [
+            new Key(KeyTypes.Property, "http://example.com/idta/digital-nameplate/model-type")
+          ]
+        ),
+        qualifiers:
+        [
+            new Qualifier(
+                          type: "ExternalReference",
+                          valueType: DataTypeDefXsd.String,
+                          value: "ZeroToOne")
+        ]),
+      CreateContactList(),
+      CreateContactInformation(),
+  ]
+);
+
     public static readonly SemanticTreeNode SubmodelTreeNode = CreateSubmodelTreeNode();
 
     public static SemanticTreeNode CreateSubmodelTreeNode()
@@ -772,6 +848,41 @@ internal static class TestData
         complexDataBranchNode2.AddChild(CreateContactListTreeNode("1"));
 
         complexDataBranchNode2.AddChild(CreateContactListTreeNode("2"));
+
+        complexDataBranchNode2.AddChild(CreateContactInformationTreeNode("1"));
+
+        return semanticTreeNode;
+    }
+
+    public static SemanticTreeNode CreateSubmodelWithInValidComplexDataTreeNode()
+    {
+        var semanticTreeNode = new SemanticBranchNode("http://example.com/idta/digital-nameplate/semantic-id", Cardinality.Unknown);
+
+        var complexDataBranchNode1 = new SemanticBranchNode("http://example.com/idta/digital-nameplate/complex-data", Cardinality.ZeroToMany);
+
+        var complexDataBranchNode2 = new SemanticBranchNode("http://example.com/idta/digital-nameplate/complex-data", Cardinality.ZeroToMany);
+
+        semanticTreeNode.AddChild(complexDataBranchNode1);
+
+        semanticTreeNode.AddChild(complexDataBranchNode2);
+
+        complexDataBranchNode1.AddChild(CreateManufacturerNameTreeNode());
+
+        complexDataBranchNode1.AddChild(CreateModelTypeTreeNode());
+
+        complexDataBranchNode1.AddChild(CreateContactListTreeNode());
+
+        complexDataBranchNode1.AddChild(CreateContactInformationTreeNode());
+
+        complexDataBranchNode2.AddChild(CreateManufacturerNameTreeNode("1"));
+
+        complexDataBranchNode2.AddChild(CreateModelTypeTreeNode());
+
+        complexDataBranchNode2.AddChild(CreateContactListTreeNode("1"));
+
+        complexDataBranchNode2.AddChild(CreateContactListTreeNode("2"));
+
+        complexDataBranchNode2.AddChild(new SemanticLeafNode("http://example.com/idta/digital-nameplate/contact-list", $"Test InValid Contact List", DataType.String, Cardinality.One));
 
         complexDataBranchNode2.AddChild(CreateContactInformationTreeNode("1"));
 

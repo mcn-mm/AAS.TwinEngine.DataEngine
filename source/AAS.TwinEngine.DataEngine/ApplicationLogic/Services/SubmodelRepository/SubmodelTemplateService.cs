@@ -5,6 +5,7 @@ using AAS.TwinEngine.DataEngine.ApplicationLogic.Exceptions.Application;
 using AAS.TwinEngine.DataEngine.ApplicationLogic.Exceptions.Base;
 using AAS.TwinEngine.DataEngine.ApplicationLogic.Exceptions.Infrastructure;
 using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.AasEnvironment.Providers;
+using AAS.TwinEngine.DataEngine.DomainModel.SubmodelRepository;
 
 using AasCore.Aas3_0;
 
@@ -131,16 +132,24 @@ public partial class SubmodelTemplateService(
     private static bool TryParseIdShortWithBracketIndex(string idShort, out string idShortWithoutIndex, out int index)
     {
         var match = SubmodelElementListIndex().Match(idShort);
-        if (match.Success)
+        if (!match.Success)
         {
-            idShortWithoutIndex = match.Groups[1].Value;
-            index = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
-            return true;
+            idShortWithoutIndex = string.Empty;
+            index = -1;
+            return false;
         }
 
-        idShortWithoutIndex = string.Empty;
-        index = -1;
-        return false;
+        idShortWithoutIndex = match.Groups[1].Value;
+        var indexGroup = match.Groups[2].Success ? match.Groups[2] : match.Groups[3];
+        if (!indexGroup.Success)
+        {
+            idShortWithoutIndex = string.Empty;
+            index = -1;
+            return false;
+        }
+
+        index = int.Parse(indexGroup.Value, CultureInfo.InvariantCulture);
+        return true;
     }
 
     private static SubmodelElementList GetListElementByIdShort(List<ISubmodelElement> elements, string idShort)
@@ -157,7 +166,20 @@ public partial class SubmodelTemplateService(
 
     private static ISubmodelElement? GetElementAtIndex(SubmodelElementList list, int index)
     {
-        if (index < 0 || index >= list.Value?.Count)
+        if (index < 0)
+        {
+            throw new InternalDataProcessingException();
+        }
+
+        if (list.TypeValueListElement is AasSubmodelElements.SubmodelElementCollection or AasSubmodelElements.SubmodelElementList && list.Value?.Count > 0)
+        {
+            if (GetCardinality(list.Value.FirstOrDefault()!) is Cardinality.OneToMany or Cardinality.ZeroToMany)
+            {
+                return list.Value.FirstOrDefault()!;
+            }
+        }
+
+        if (index >= list.Value?.Count)
         {
             throw new InternalDataProcessingException();
         }
@@ -183,7 +205,7 @@ public partial class SubmodelTemplateService(
     /// e.g. "element[3]" -> matches Group1= "element", Group2 = "3"
     /// Pattern: ^(.+?)\[(\d+)\]$
     /// </summary>
-    [GeneratedRegex(@"^(.+?)\[(\d+)\]$")]
+    [GeneratedRegex(@"^(.+?)(?:\[(\d+)\]|%5B(\d+)%5D)$")]
     private static partial Regex SubmodelElementListIndex();
 
     /// <summary>
@@ -200,5 +222,18 @@ public partial class SubmodelTemplateService(
         {
             throw new InternalDataProcessingException();
         }
+    }
+
+    private static Cardinality GetCardinality(ISubmodelElement element)
+    {
+        var qualifierValue = element.Qualifiers?.FirstOrDefault()?.Value;
+        if (qualifierValue is null)
+        {
+            return Cardinality.Unknown;
+        }
+
+        return Enum.TryParse<Cardinality>(qualifierValue, ignoreCase: true, out var result)
+                   ? result
+                   : Cardinality.Unknown;
     }
 }

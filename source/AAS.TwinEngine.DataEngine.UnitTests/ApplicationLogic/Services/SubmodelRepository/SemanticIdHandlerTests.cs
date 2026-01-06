@@ -558,6 +558,31 @@ public class SemanticIdHandlerTests
     }
 
     [Fact]
+    public void FillOutTemplate_SubmodelOfComplexData_ReturnsSubmodelWithValue()
+    {
+        var complexData = TestData.ComplexData;
+        var submodel = TestData.CreateSubmodelWithComplexData();
+        submodel.SubmodelElements?.Add(complexData);
+        var values = TestData.CreateSubmodelWithInValidComplexDataTreeNode();
+
+        var submodelWithValues = (Submodel)_sut.FillOutTemplate(submodel, values);
+
+        Equal(2, submodelWithValues.SubmodelElements!.Count);
+        Equal("ComplexData0", submodelWithValues.SubmodelElements[0].IdShort);
+        Equal("ComplexData1", submodelWithValues.SubmodelElements[1].IdShort);
+        var complexData0 = GetSubmodelElementCollection(submodelWithValues, 0);
+        var complexData1 = GetSubmodelElementCollection(submodelWithValues, 1);
+        Equal(3, complexData1.Value!.Count);
+        AssertMultiLanguageProperty(complexData0, "Test Example Manufacturer", "Test Beispiel Hersteller");
+        AssertMultiLanguageProperty(complexData1, "Test1 Example Manufacturer", "Test1 Beispiel Hersteller");
+        AssertModelType(complexData0, 1, "22.47");
+        AssertModelType(complexData1, 1, "22.47");
+        AssertContactList(complexData0, 2, "Test John Doe", "Test Example Model");
+        AssertContactInfo(complexData0, 3, "Test John Doe");
+        AssertContactInfo(complexData1, 2, "Test1 John Doe");
+    }
+
+    [Fact]
     public void FillOutTemplate_ShouldNotChangeAnyThing_WhenReferenceElementHasNullValue()
     {
         var value = TestData.CreateReferenceElementWithEmptyValues();
