@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 
+using AAS.TwinEngine.DataEngine.Infrastructure.Http.Authorization;
 using AAS.TwinEngine.DataEngine.Infrastructure.Http.Config;
 using AAS.TwinEngine.DataEngine.Infrastructure.Http.Policies;
 
@@ -12,17 +13,23 @@ public static class HttpClientRegistrationExtensions
         IConfiguration configuration,
         string clientName,
         string retryPolicySectionKey,
-        Uri baseUrl
+        Uri baseUrl,
+        bool forwardAuthorizationHeader = false
         )
     {
         _ = services.Configure<HttpRetryPolicyOptions>(configuration.GetSection($"{HttpRetryPolicyOptions.Section}:{retryPolicySectionKey}"));
 
-        _ = services.AddHttpClient(clientName, client =>
+        var httpClientBuilder = services.AddHttpClient(clientName, client =>
         {
             client.BaseAddress = baseUrl;
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         })
         .AddStandardResilienceHandler(retryPolicySectionKey);
+
+        if (forwardAuthorizationHeader)
+        {
+            _ = httpClientBuilder.AddHttpMessageHandler<ForwardAuthorizationHeaderHandler>();
+        }
 
         return services;
     }
