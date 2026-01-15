@@ -2,8 +2,6 @@
 
 using AasCore.Aas3_0;
 
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
-
 using File = AasCore.Aas3_0.File;
 using Key = AasCore.Aas3_0.Key;
 using Range = AasCore.Aas3_0.Range;
