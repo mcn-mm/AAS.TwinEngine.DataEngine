@@ -15,5 +15,3 @@ public class PluginManifestHealthCheck(IPluginManifestHealthStatus pluginManifes
         return Task.FromResult(HealthCheckResult.Unhealthy());
     }
 }
-
-

@@ -5,6 +5,9 @@ using AAS.TwinEngine.DataEngine.ServiceConfiguration;
 
 using Asp.Versioning;
 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+
 using Serilog;
 
 namespace AAS.TwinEngine.DataEngine;
@@ -20,7 +23,10 @@ public class Program
         _ = builder.Host.UseSerilog();
         builder.ConfigureLogging(builder.Configuration);
         builder.ConfigureCorsServices();
-        _ = builder.Services.AddHealthChecks().AddCheck<PluginManifestHealthCheck>("system_health");
+        _ = builder.Services.AddHealthChecks()
+            .AddCheck<PluginAvailabilityHealthCheck>("plugin")
+            .AddCheck<TemplateRegistryHealthCheck>("template_registry")
+            .AddCheck<TemplateRepositoryHealthCheck>("template_repository");
 
         _ = builder.Services.AddHttpContextAccessor();
         builder.Services.ConfigureInfrastructure(builder.Configuration);
