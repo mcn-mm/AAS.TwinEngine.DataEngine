@@ -9,6 +9,6 @@ public class AasxExportOptions
     public const string DefaultXmlFileName = "content.xml";
 
     [Required]
-    public string RootFolder { get; set; }
+    public string RootFolder { get; set; } = "aasx";
 
 }
