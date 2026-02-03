@@ -10,17 +10,17 @@ public class AasEnvironmentConfig
 
     public const string SubmodelRegistryHttpClientName = "submodel-registry";
 
-    public Uri DataEngineRepositoryBaseUrl { get; set; } = new("https://localhost:5059");
+    public Uri DataEngineRepositoryBaseUrl { get; set; } = null!;
 
-    public Uri? AasEnvironmentRepositoryBaseUrl { get; set; } = new("http://localhost:8081");
+    public Uri? AasEnvironmentRepositoryBaseUrl { get; set; } = null!;
 
-    public Uri? AasRegistryBaseUrl { get; set; } = new("http://localhost:8082");
+    public Uri? AasRegistryBaseUrl { get; set; } = null!;
 
     public string SubModelRepositoryPath { get; set; } = "submodels";
 
     public string AasRegistryPath { get; set; } = "shell-descriptors";
 
-    public Uri? SubModelRegistryBaseUrl { get; set; } = new("http://localhost:8083");
+    public Uri? SubModelRegistryBaseUrl { get; set; } = null!;
 
     public string SubModelRegistryPath { get; set; } = "submodel-descriptors";
 
@@ -30,5 +30,5 @@ public class AasEnvironmentConfig
 
     public string ConceptDescriptionPath { get; set; } = "concept-descriptions";
 
-    public Uri CustomerDomainUrl { get; set; } = new Uri("https://mm-software.com");
+    public Uri CustomerDomainUrl { get; set; } = null!;
 }
