@@ -10,17 +10,17 @@ public class AasEnvironmentConfig
 
     public const string SubmodelRegistryHttpClientName = "submodel-registry";
 
-    public Uri DataEngineRepositoryBaseUrl { get; set; } = null!;
+    public Uri DataEngineRepositoryBaseUrl { get; set; } = new("https://localhost:5059");
 
-    public Uri? AasEnvironmentRepositoryBaseUrl { get; set; } = null!;
+    public Uri? AasEnvironmentRepositoryBaseUrl { get; set; } = new("http://localhost:8081");
 
-    public Uri? AasRegistryBaseUrl { get; set; } = null!;
+    public Uri? AasRegistryBaseUrl { get; set; } = new("http://localhost:8082");
 
     public string SubModelRepositoryPath { get; set; } = "submodels";
 
     public string AasRegistryPath { get; set; } = "shell-descriptors";
 
-    public Uri? SubModelRegistryBaseUrl { get; set; } = null!;
+    public Uri? SubModelRegistryBaseUrl { get; set; } = new("http://localhost:8083");
 
     public string SubModelRegistryPath { get; set; } = "submodel-descriptors";
 
