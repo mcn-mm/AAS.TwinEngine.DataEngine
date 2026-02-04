@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.Plugin.Config;
+﻿using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.Plugin.Config;
 using AAS.TwinEngine.DataEngine.Infrastructure.Http.Clients;
 
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -10,25 +8,19 @@ namespace AAS.TwinEngine.DataEngine.Infrastructure.Monitoring;
 
 public sealed class TemplateRepositoryHealthCheck(ICreateClient clientFactory, IOptions<AasEnvironmentConfig> aasEnvironment, ILogger<TemplateRepositoryHealthCheck> logger) : IHealthCheck
 {
-    private const int HealthCheckTimeoutSeconds = 5;
     private readonly string _aasRepositoryPath = aasEnvironment.Value.AasRepositoryPath;
     private readonly string _subModelRepositoryPath = aasEnvironment.Value.SubModelRepositoryPath;
 
-    public async Task<HealthCheckResult> CheckHealthAsync(
-        HealthCheckContext context,
-        CancellationToken cancellationToken = default)
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        cts.CancelAfter(TimeSpan.FromSeconds(HealthCheckTimeoutSeconds));
-
-        var aasHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, $"{_aasRepositoryPath}?limit=1", "aas-repository", cts.Token).ConfigureAwait(false);
+        var aasHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, $"{_aasRepositoryPath}?limit=1", "aas-repository", cancellationToken).ConfigureAwait(false);
 
         if (!aasHealthy)
         {
             return HealthCheckResult.Unhealthy();
         }
 
-        var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, $"{_subModelRepositoryPath}?limit=1", "submodel-repository", cts.Token).ConfigureAwait(false);
+        var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, $"{_subModelRepositoryPath}?limit=1", "submodel-repository", cancellationToken).ConfigureAwait(false);
 
         return submodelHealthy
             ? HealthCheckResult.Healthy()

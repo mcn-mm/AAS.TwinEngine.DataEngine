@@ -10,23 +10,19 @@ public sealed class TemplateRegistryHealthCheck(ICreateClient clientFactory,
                                                 IOptions<AasEnvironmentConfig> aasEnvironment,
                                                 ILogger<TemplateRegistryHealthCheck> logger) : IHealthCheck
 {
-    private const int HealthCheckTimeoutSeconds = 5;
     private readonly string _aasRegistryPath = aasEnvironment.Value.AasRegistryPath;
     private readonly string _subModelRegistryPath = aasEnvironment.Value.SubModelRegistryPath;
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        cts.CancelAfter(TimeSpan.FromSeconds(HealthCheckTimeoutSeconds));
-
-        var aasHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasRegistryHttpClientName, $"{_aasRegistryPath}?limit=1", "aas-registry", cts.Token).ConfigureAwait(false);
+        var aasHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasRegistryHttpClientName, $"{_aasRegistryPath}?limit=1", "aas-registry", cancellationToken).ConfigureAwait(false);
 
         if (!aasHealthy)
         {
             return HealthCheckResult.Unhealthy();
         }
 
-        var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.SubmodelRegistryHttpClientName, $"{_subModelRegistryPath}?limit=1", "submodel-registry", cts.Token).ConfigureAwait(false);
+        var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.SubmodelRegistryHttpClientName, $"{_subModelRegistryPath}?limit=1", "submodel-registry", cancellationToken).ConfigureAwait(false);
 
         return submodelHealthy
             ? HealthCheckResult.Healthy()
