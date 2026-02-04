@@ -23,16 +23,15 @@ public sealed class PluginAvailabilityHealthCheck(ICreateClient clientFactory,
             return HealthCheckResult.Unhealthy();
         }
 
-        var plugins = pluginConfig?.Value?.Plugins ?? [];
-
-        if (plugins.Count == 0)
+        if (pluginConfig?.Value?.Plugins == null || pluginConfig.Value.Plugins.Count == 0)
         {
-            logger.LogWarning("No plugins configured in PluginConfig");
-            return HealthCheckResult.Unhealthy();
+            logger.LogError("Plugins not configured or empty");
+            return HealthCheckResult.Unhealthy("No plugins configured");
         }
 
-        using var cts = CreateTimeoutToken(cancellationToken);
-        var allHealthy = await CheckAllPluginsAsync(plugins, cts.Token).ConfigureAwait(false);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(HealthCheckTimeoutSeconds));
+        var allHealthy = await CheckAllPluginsAsync(pluginConfig.Value.Plugins, cts.Token).ConfigureAwait(false);
 
         return allHealthy
                    ? HealthCheckResult.Healthy()
@@ -65,10 +64,9 @@ public sealed class PluginAvailabilityHealthCheck(ICreateClient clientFactory,
     {
         try
         {
-            var httpClient = clientFactory.CreateClient(
-                $"{PluginConfig.HttpClientNamePrefix}{plugin.PluginName}");
+            var httpClient = clientFactory.CreateClient($"{PluginConfig.HttpClientNamePrefix}{plugin.PluginName}");
 
-            var response = await httpClient
+            using var response = await httpClient
                 .GetAsync(new Uri(ManifestEndpoint, UriKind.Relative), cancellationToken)
                 .ConfigureAwait(false);
 

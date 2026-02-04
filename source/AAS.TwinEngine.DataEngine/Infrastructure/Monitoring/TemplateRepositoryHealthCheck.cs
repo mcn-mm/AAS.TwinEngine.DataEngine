@@ -18,7 +18,8 @@ public sealed class TemplateRepositoryHealthCheck(ICreateClient clientFactory, I
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
-        using var cts = CreateTimeoutToken(cancellationToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(HealthCheckTimeoutSeconds));
 
         var aasHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, $"{_aasRepositoryPath}?limit=1", "aas-repository", cts.Token).ConfigureAwait(false);
 
@@ -34,13 +35,6 @@ public sealed class TemplateRepositoryHealthCheck(ICreateClient clientFactory, I
             : HealthCheckResult.Unhealthy();
     }
 
-    private static CancellationTokenSource CreateTimeoutToken(CancellationToken cancellationToken)
-    {
-        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        cts.CancelAfter(TimeSpan.FromSeconds(HealthCheckTimeoutSeconds));
-        return cts;
-    }
-
     private async Task<bool> CheckEndpointAsync(string clientName, string path, string endpointKey, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -52,7 +46,7 @@ public sealed class TemplateRepositoryHealthCheck(ICreateClient clientFactory, I
         try
         {
             var httpClient = clientFactory.CreateClient(clientName);
-            var response = await httpClient.GetAsync(new Uri(path, UriKind.Relative), cancellationToken)
+            using var response = await httpClient.GetAsync(new Uri(path, UriKind.Relative), cancellationToken)
                                            .ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
