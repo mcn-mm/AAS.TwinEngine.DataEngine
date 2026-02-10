@@ -138,12 +138,19 @@ jobs:
 
       - name: Publish Test Results
         uses: dorny/test-reporter@fe45e9537387dac839af0d33ba56eed8e24189e8 # v2.3.0
-        if: always() && github.event.pull_request.head.repo.fork == false
+        if: github.event.pull_request.head.repo.fork == false
         with:
           name: Playwright Test Results
           path: "**/playwright_test_results.trx"
           reporter: dotnet-trx
           fail-on-error: true
+
+      - name: Upload TRX as artifact
+        if: github.event.pull_request.head.repo.fork == false
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: test-results
+          path: "**/*playwright_test_results.trx"
 
       - name: Capture Docker Compose Logs
         if: always()
