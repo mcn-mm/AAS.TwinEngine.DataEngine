@@ -3,7 +3,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 1 * * 1" # Runs every Monday at 2:00 AM UTC
-    
+
+permissions:
+  contents: read
+
 jobs:
   ghcr-cleanup:
     name: ghcr.io cleanup action
