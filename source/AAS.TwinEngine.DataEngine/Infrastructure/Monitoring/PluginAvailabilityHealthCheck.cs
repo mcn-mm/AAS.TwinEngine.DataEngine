@@ -11,7 +11,7 @@ public sealed class PluginAvailabilityHealthCheck(ICreateClient clientFactory,
                                                   IPluginManifestHealthStatus pluginManifestHealthStatus,
                                                   ILogger<PluginAvailabilityHealthCheck> logger) : IHealthCheck
 {
-    private const string ManifestEndpoint = "manifest"; //change to health endpoint after implementing health endpoint in plugin
+    private const string HealthEndpoint = "health";
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
@@ -55,7 +55,7 @@ public sealed class PluginAvailabilityHealthCheck(ICreateClient clientFactory,
             var httpClient = clientFactory.CreateClient($"{PluginConfig.HttpClientNamePrefix}{plugin.PluginName}");
 
             using var response = await httpClient
-                .GetAsync(new Uri(ManifestEndpoint, UriKind.Relative), cancellationToken)
+                .GetAsync(new Uri(HealthEndpoint, UriKind.Relative), cancellationToken)
                 .ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)

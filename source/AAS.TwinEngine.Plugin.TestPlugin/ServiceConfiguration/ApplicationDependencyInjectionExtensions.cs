@@ -3,6 +3,7 @@ using AAS.TwinEngine.Plugin.TestPlugin.Api.MetaData.Handler;
 using AAS.TwinEngine.Plugin.TestPlugin.Api.Submodel.Handler;
 using AAS.TwinEngine.Plugin.TestPlugin.Api.Submodel.Services;
 using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Exceptions;
+using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Health;
 using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Manifest;
 using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.MetaData;
 using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Submodel;
@@ -29,5 +30,7 @@ public static class ApplicationDependencyInjectionExtensions
 
         services.AddScoped<IManifestService, ManifestService>();
         services.AddScoped<IManifestHandler, ManifestHandler>();
+
+        services.AddScoped<IHealthStatusService, HealthStatusService>();
     }
 }

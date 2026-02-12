@@ -15,9 +15,10 @@ public class PluginManifestHealthStatusTests
     [Fact]
     public void Can_Set_IsHealthy_ToFalse()
     {
-        var sut = new PluginManifestHealthStatus();
-
-        sut.IsHealthy = false;
+        var sut = new PluginManifestHealthStatus
+        {
+            IsHealthy = false
+        };
 
         Assert.False(sut.IsHealthy);
     }
@@ -39,7 +40,7 @@ public class PluginManifestHealthStatusTests
         var tasks = new Task[100];
         var readValues = new bool[100];
 
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             var index = i;
             tasks[i] = Task.Run(() =>
@@ -70,13 +71,13 @@ public class PluginManifestHealthStatusTests
         var exceptions = new List<Exception>();
         var tasks = new List<Task>();
 
-        for (int i = 0; i < 50; i++)
+        for (var i = 0; i < 50; i++)
         {
             tasks.Add(Task.Run(() =>
             {
                 try
                 {
-                    for (int j = 0; j < 1000; j++)
+                    for (var j = 0; j < 1000; j++)
                     {
                         sut.IsHealthy = j % 2 == 0;
                         _ = sut.IsHealthy;
@@ -92,7 +93,7 @@ public class PluginManifestHealthStatusTests
             }));
         }
 
-        Task.WaitAll(tasks.ToArray());
+        Task.WaitAll([.. tasks]);
 
         Assert.Empty(exceptions);
     }
