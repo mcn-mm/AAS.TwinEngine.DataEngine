@@ -43,7 +43,7 @@ public static class InfrastructureDependencyInjectionExtensions
         _ = services.AddHttpClientWithResilience(configuration, AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, HttpRetryPolicyOptions.TemplateProvider, aasEnvironment?.AasEnvironmentRepositoryBaseUrl!);
         _ = services.AddHttpClientWithResilience(configuration, AasEnvironmentConfig.AasRegistryHttpClientName, HttpRetryPolicyOptions.TemplateProvider, aasEnvironment?.AasRegistryBaseUrl!);
         _ = services.AddHttpClientWithResilience(configuration, AasEnvironmentConfig.SubmodelRegistryHttpClientName, HttpRetryPolicyOptions.SubmodelDescriptorProvider, aasEnvironment?.SubModelRegistryBaseUrl!);
-
+        _ = services.Configure<MultiLanguagePropertySettings>(configuration.GetSection(MultiLanguagePropertySettings.Section));
         foreach (var plugin in plugins.Plugins)
         {
             _ = services.AddHttpClientWithResilience(configuration, PluginConfig.HttpClientNamePrefix + plugin.PluginName, HttpRetryPolicyOptions.PluginDataProvider, plugin?.PluginUrl);
