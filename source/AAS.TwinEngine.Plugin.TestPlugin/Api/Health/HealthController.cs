@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace AAS.TwinEngine.Plugin.TestPlugin.Api.Health;
 
 [ApiController]
-[Route("[controller]")]
+[Route("health")]
 public class HealthController(IHealthStatusService healthStatusService) : ControllerBase
 {
-    [HttpGet("health")]
+    [HttpGet()]
     [ProducesResponseType(typeof(HealthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(HealthResponseDto), StatusCodes.Status503ServiceUnavailable)]
     public IActionResult Get()
