@@ -11,7 +11,7 @@ public sealed class PluginAvailabilityHealthCheck(ICreateClient clientFactory,
                                                   IPluginManifestHealthStatus pluginManifestHealthStatus,
                                                   ILogger<PluginAvailabilityHealthCheck> logger) : IHealthCheck
 {
-    private const string HealthEndpoint = "health";
+    private const string HealthEndpoint = "healthz";
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
