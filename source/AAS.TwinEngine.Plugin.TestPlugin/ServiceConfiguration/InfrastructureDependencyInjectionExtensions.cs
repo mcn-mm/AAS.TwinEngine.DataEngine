@@ -1,5 +1,4 @@
-﻿using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Health;
-using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Manifest;
+﻿using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Manifest;
 using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.MetaData;
 using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Submodel;
 using AAS.TwinEngine.Plugin.TestPlugin.ApplicationLogic.Services.Submodel.Config;
@@ -18,7 +17,6 @@ public static class InfrastructureDependencyInjectionExtensions
         services.AddOptions<Semantics>().Bind(configuration.GetSection(Semantics.Section)).ValidateDataAnnotations().ValidateOnStart();
         services.AddOptions<Capabilities>().Bind(configuration.GetSection(Capabilities.Section)).ValidateDataAnnotations().ValidateOnStart();
         services.AddScoped<MockDataInitializer>();
-        services.AddSingleton<IHealthStatusProvider, HealthStatusProvider>();
         services.AddSingleton<ISubmodelProvider, SubmodelProvider>();
         services.AddSingleton<IMetaDataProvider, MetaDataProvider>();
         services.AddScoped<IManifestProvider, ManifestProvider>();
