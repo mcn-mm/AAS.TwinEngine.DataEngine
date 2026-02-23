@@ -13,14 +13,14 @@ public sealed class TemplateRepositoryHealthCheck(ICreateClient clientFactory, I
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        var aasHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, $"{_aasRepositoryPath}?limit=1", "aas-repository", cancellationToken).ConfigureAwait(false);
+        var aasHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, _aasRepositoryPath, "aas-repository", cancellationToken).ConfigureAwait(false);
 
         if (!aasHealthy)
         {
             return HealthCheckResult.Unhealthy();
         }
 
-        var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, $"{_subModelRepositoryPath}?limit=1", "submodel-repository", cancellationToken).ConfigureAwait(false);
+        var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, _subModelRepositoryPath, "submodel-repository", cancellationToken).ConfigureAwait(false);
 
         return submodelHealthy
             ? HealthCheckResult.Healthy()
@@ -35,10 +35,12 @@ public sealed class TemplateRepositoryHealthCheck(ICreateClient clientFactory, I
             return false;
         }
 
+        var requestPath = $"{path}?limit=1";
+
         try
         {
             var httpClient = clientFactory.CreateClient(clientName);
-            using var response = await httpClient.GetAsync(new Uri(path, UriKind.Relative), cancellationToken)
+            using var response = await httpClient.GetAsync(new Uri(requestPath, UriKind.Relative), cancellationToken)
                                            .ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)

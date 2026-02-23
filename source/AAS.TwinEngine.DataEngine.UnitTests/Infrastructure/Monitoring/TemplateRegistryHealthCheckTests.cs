@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.Http;
 
 using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.Plugin.Config;
 using AAS.TwinEngine.DataEngine.Infrastructure.Http.Clients;
@@ -121,6 +120,135 @@ public class TemplateRegistryHealthCheckTests
         var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
 
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_Returns_Unhealthy_When_SubmodelRegistry_Path_Is_Not_Configured()
+    {
+        var environmentConfig = new AasEnvironmentConfig
+        {
+            AasRegistryPath = "/aas",
+            SubModelRegistryPath = string.Empty
+        };
+
+        var options = Options.Create(environmentConfig);
+
+        var clientFactory = Substitute.For<ICreateClient>();
+        clientFactory.CreateClient(AasEnvironmentConfig.AasRegistryHttpClientName).Returns(CreateHttpClient(HttpStatusCode.OK));
+
+        var logger = Substitute.For<ILogger<TemplateRegistryHealthCheck>>();
+
+        var sut = new TemplateRegistryHealthCheck(clientFactory, options, logger);
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_Returns_Unhealthy_When_AasRegistry_Request_Throws_HttpRequestException()
+    {
+        var environmentConfig = new AasEnvironmentConfig
+        {
+            AasRegistryPath = "/aas",
+            SubModelRegistryPath = "/submodel"
+        };
+
+        var options = Options.Create(environmentConfig);
+
+        var clientFactory = Substitute.For<ICreateClient>();
+        clientFactory.CreateClient(AasEnvironmentConfig.AasRegistryHttpClientName).Returns(CreateThrowingHttpClient(new HttpRequestException("network")));
+
+        var logger = Substitute.For<ILogger<TemplateRegistryHealthCheck>>();
+
+        var sut = new TemplateRegistryHealthCheck(clientFactory, options, logger);
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_Returns_Unhealthy_When_SubmodelRegistry_Request_Throws_TaskCanceledException()
+    {
+        var environmentConfig = new AasEnvironmentConfig
+        {
+            AasRegistryPath = "/aas",
+            SubModelRegistryPath = "/submodel"
+        };
+
+        var options = Options.Create(environmentConfig);
+
+        var clientFactory = Substitute.For<ICreateClient>();
+
+        clientFactory.CreateClient(AasEnvironmentConfig.AasRegistryHttpClientName).Returns(CreateHttpClient(HttpStatusCode.OK));
+        clientFactory.CreateClient(AasEnvironmentConfig.SubmodelRegistryHttpClientName).Returns(CreateThrowingHttpClient(new TaskCanceledException("timeout")));
+
+        var logger = Substitute.For<ILogger<TemplateRegistryHealthCheck>>();
+
+        var sut = new TemplateRegistryHealthCheck(clientFactory, options, logger);
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_Returns_Unhealthy_When_AasRegistry_Request_Throws_Exception()
+    {
+        var environmentConfig = new AasEnvironmentConfig
+        {
+            AasRegistryPath = "/aas",
+            SubModelRegistryPath = "/submodel"
+        };
+
+        var options = Options.Create(environmentConfig);
+
+        var clientFactory = Substitute.For<ICreateClient>();
+        clientFactory.CreateClient(AasEnvironmentConfig.AasRegistryHttpClientName)
+            .Returns(CreateThrowingHttpClient(new Exception("unexpected")));
+
+        var logger = Substitute.For<ILogger<TemplateRegistryHealthCheck>>();
+
+        var sut = new TemplateRegistryHealthCheck(clientFactory, options, logger);
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_Does_Not_Check_Submodel_When_AasRegistry_Is_Unhealthy()
+    {
+        var environmentConfig = new AasEnvironmentConfig
+        {
+            AasRegistryPath = "/aas",
+            SubModelRegistryPath = "/submodel"
+        };
+
+        var options = Options.Create(environmentConfig);
+
+        var clientFactory = Substitute.For<ICreateClient>();
+        clientFactory.CreateClient(AasEnvironmentConfig.AasRegistryHttpClientName).Returns(CreateHttpClient(HttpStatusCode.InternalServerError));
+
+        var logger = Substitute.For<ILogger<TemplateRegistryHealthCheck>>();
+
+        var sut = new TemplateRegistryHealthCheck(clientFactory, options, logger);
+
+        _ = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        clientFactory.Received(1).CreateClient(AasEnvironmentConfig.AasRegistryHttpClientName);
+        clientFactory.DidNotReceive().CreateClient(AasEnvironmentConfig.SubmodelRegistryHttpClientName);
+    }
+
+    private static HttpClient CreateThrowingHttpClient(Exception exception)
+    {
+        var handler = new StubHttpMessageHandler((_, _) => throw exception);
+
+        return new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost")
+        };
     }
 
     private static HttpClient CreateHttpClient(HttpStatusCode statusCode)
