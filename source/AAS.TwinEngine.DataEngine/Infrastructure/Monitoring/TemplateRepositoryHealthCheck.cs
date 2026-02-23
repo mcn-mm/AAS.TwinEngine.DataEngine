@@ -17,14 +17,19 @@ public sealed class TemplateRepositoryHealthCheck(ICreateClient clientFactory, I
 
         if (!aasHealthy)
         {
+            logger.LogWarning("AAS Repository health status is unhealthy");
             return HealthCheckResult.Unhealthy();
         }
 
         var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, _subModelRepositoryPath, "submodel-repository", cancellationToken).ConfigureAwait(false);
 
-        return submodelHealthy
-            ? HealthCheckResult.Healthy()
-            : HealthCheckResult.Unhealthy();
+        if (submodelHealthy)
+        {
+            return HealthCheckResult.Healthy();
+        }
+
+        logger.LogWarning("Submodel Repository health status is unhealthy");
+        return HealthCheckResult.Unhealthy();
     }
 
     private async Task<bool> CheckEndpointAsync(string clientName, string path, string endpointKey, CancellationToken cancellationToken)

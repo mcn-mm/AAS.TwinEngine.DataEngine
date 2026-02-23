@@ -19,14 +19,19 @@ public sealed class TemplateRegistryHealthCheck(ICreateClient clientFactory,
 
         if (!aasHealthy)
         {
+            logger.LogWarning("AAS Registry health status is unhealthy");
             return HealthCheckResult.Unhealthy();
         }
 
         var submodelHealthy = await CheckEndpointAsync(AasEnvironmentConfig.SubmodelRegistryHttpClientName, _subModelRegistryPath, "submodel-registry", cancellationToken).ConfigureAwait(false);
 
-        return submodelHealthy
-            ? HealthCheckResult.Healthy()
-            : HealthCheckResult.Unhealthy();
+        if (submodelHealthy)
+        {
+            return HealthCheckResult.Healthy();
+        }
+
+        logger.LogWarning("Submodel Registry health status is unhealthy");
+        return HealthCheckResult.Unhealthy();
     }
 
     private async Task<bool> CheckEndpointAsync(string clientName, string path, string endpointKey, CancellationToken cancellationToken)
