@@ -17,6 +17,7 @@ public sealed class PluginAvailabilityHealthCheck(ICreateClient clientFactory,
     {
         if (!pluginManifestHealthStatus.IsHealthy)
         {
+            logger.LogWarning("Plugin manifest health status is unhealthy");
             return HealthCheckResult.Unhealthy();
         }
 

@@ -5,9 +5,6 @@ using AAS.TwinEngine.DataEngine.ServiceConfiguration;
 
 using Asp.Versioning;
 
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-
 using Serilog;
 
 namespace AAS.TwinEngine.DataEngine;
@@ -62,6 +59,7 @@ public class Program
             {
                 var pluginManifestInitializer = scope.ServiceProvider.GetRequiredService<PluginManifestInitializer>();
                 await pluginManifestInitializer.InitializeAsync(CancellationToken.None).ConfigureAwait(false);
+                pluginManifestHealthStatus.IsHealthy = true;
             }
             catch (MultiPluginConflictException)
             {
