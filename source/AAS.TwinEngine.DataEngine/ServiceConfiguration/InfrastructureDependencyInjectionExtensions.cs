@@ -6,6 +6,7 @@ using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.Plugin.Helper;
 using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.Plugin.Providers;
 using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.SubmodelRegistry.Providers;
 using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.SubmodelRepository.Config;
+using AAS.TwinEngine.DataEngine.ApplicationLogic.Services.SubmodelRepository.Config.Helper;
 using AAS.TwinEngine.DataEngine.Infrastructure.Http.Clients;
 using AAS.TwinEngine.DataEngine.Infrastructure.Http.Config;
 using AAS.TwinEngine.DataEngine.Infrastructure.Http.Extensions;
@@ -18,6 +19,8 @@ using AAS.TwinEngine.DataEngine.Infrastructure.Providers.PluginDataProvider.Serv
 using AAS.TwinEngine.DataEngine.Infrastructure.Providers.SubmodelRegistryProvider.Services;
 using AAS.TwinEngine.DataEngine.Infrastructure.Providers.TemplateProvider.Config;
 using AAS.TwinEngine.DataEngine.Infrastructure.Providers.TemplateProvider.Services;
+
+using Microsoft.Extensions.Options;
 
 namespace AAS.TwinEngine.DataEngine.ServiceConfiguration;
 
@@ -35,15 +38,20 @@ public static class InfrastructureDependencyInjectionExtensions
         _ = services.Configure<AasEnvironmentConfig>(configuration.GetSection(AasEnvironmentConfig.Section));
         _ = services.Configure<AasxExportOptions>(configuration.GetSection(AasxExportOptions.Section));
         _ = services.Configure<PluginConfig>(configuration.GetSection(PluginConfig.Section));
-
+        _ = services.Configure<Semantics>(configuration.GetSection(Semantics.Section));
         var aasEnvironment = configuration.GetSection(AasEnvironmentConfig.Section).Get<AasEnvironmentConfig>();
         var plugins = configuration.GetSection(PluginConfig.Section).Get<PluginConfig>();
 
-        _ = services.AddOptions<Semantics>().Bind(configuration.GetSection(Semantics.Section)).ValidateDataAnnotations().ValidateOnStart();
+        
         _ = services.AddHttpClientWithResilience(configuration, AasEnvironmentConfig.AasEnvironmentRepoHttpClientName, HttpRetryPolicyOptions.TemplateProvider, aasEnvironment?.AasEnvironmentRepositoryBaseUrl!);
         _ = services.AddHttpClientWithResilience(configuration, AasEnvironmentConfig.AasRegistryHttpClientName, HttpRetryPolicyOptions.TemplateProvider, aasEnvironment?.AasRegistryBaseUrl!);
         _ = services.AddHttpClientWithResilience(configuration, AasEnvironmentConfig.SubmodelRegistryHttpClientName, HttpRetryPolicyOptions.SubmodelDescriptorProvider, aasEnvironment?.SubModelRegistryBaseUrl!);
-
+        
+        _ = services.AddOptions<MultiLanguagePropertySettings>()
+            .Bind(configuration.GetSection(MultiLanguagePropertySettings.Section))
+            .ValidateOnStart();
+        _ = services.AddSingleton<IValidateOptions<MultiLanguagePropertySettings>, MultiLanguagePropertySettingsValidator>();
+        
         foreach (var plugin in plugins.Plugins)
         {
             _ = services.AddHttpClientWithResilience(configuration, PluginConfig.HttpClientNamePrefix + plugin.PluginName, HttpRetryPolicyOptions.PluginDataProvider, plugin?.PluginUrl);
